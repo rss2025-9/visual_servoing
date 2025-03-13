@@ -21,10 +21,16 @@ from vs_msgs.msg import ConeLocation, ConeLocationPixel
 
 ######################################################
 ## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE
-PTS_IMAGE_PLANE = [[-1, -1],
-                   [-1, -1],
-                   [-1, -1],
-                   [-1, -1]] # dummy points
+PTS_IMAGE_PLANE = [[442, 228],
+                   [127, 296],
+                   [268, 220],
+                   [347, 270],
+                   [323, 291], 
+                   [60, 348], 
+                   [256, 173], 
+                   [402, 173], 
+                   [553, 208], 
+                   [546, 258]] # dummy points
 ######################################################
 
 # PTS_GROUND_PLANE units are in inches
@@ -32,14 +38,19 @@ PTS_IMAGE_PLANE = [[-1, -1],
 
 ######################################################
 ## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE
-PTS_GROUND_PLANE = [[59, -20],
-                    [65, 13],
-                    [30, 7.5],
-                    [40, 34.5]] # dummy points
+PTS_GROUND_PLANE = [[34, -12],
+                    [18, 12],
+                    [39, 7],
+                    [21, 0],
+                    [19, 3], 
+                    [15, 14],
+                    [96, 18],
+                    [96, -23], 
+                    [38, -29], 
+                    [23, -13]] # dummy points
 ######################################################
 
 METERS_PER_INCH = 0.0254
-
 
 class HomographyTransformer(Node):
     def __init__(self):
@@ -65,6 +76,7 @@ class HomographyTransformer(Node):
         self.h, err = cv2.findHomography(np_pts_image, np_pts_ground)
 
         self.get_logger().info("Homography Transformer Initialized")
+        self.get_logger().info(f"Homography Matrix: \n {self.h}" )
 
     def cone_detection_callback(self, msg):
         #Extract information from message
@@ -79,8 +91,9 @@ class HomographyTransformer(Node):
         relative_xy_msg.x_pos = x
         relative_xy_msg.y_pos = y
 
-        self.cone_pub.publish(relative_xy_msg)
+        self.draw_marker(x, y, "map")
 
+        self.cone_pub.publish(relative_xy_msg)
 
     def transformUvToXy(self, u, v):
         """
