@@ -45,7 +45,7 @@ class ParkingController(Node):
         # PID variables for the controller.
         self.previous_x_error: float = 0 
         self.previous_time: float = Time()
-        self.integrated_dist_error: float = 0
+        self.x_error_integral: float = 0
         # Integral error clipping for the PID controller to prevent windup.
         self.integral_bounds: tuple[float, float] = (-10.0, 10.0)
 
@@ -78,44 +78,39 @@ class ParkingController(Node):
         current_time: float = self.get_clock().now()
         dt: float = (current_time.nanoseconds - self.previous_time.nanoseconds) / 10e9
 
-        # Current angle of the cone relative to front of the car.
         #! @note: We want to be right in front of the cone, so we want an angle
         #! of 0 (aka angle is also the angle error).
+        # Current angle of the cone relative to front of the car.
         angle_error: float = np.arctan2(msg.y_pos, msg.x_pos)
-        # Current distance of the car from the cone
-        distance: float = np.hypot(msg.x_pos, msg.y_pos)
-
-        # Gets the distance error.
-        distance_error: float = distance - self.parking_distance
         # Gets the error of the x position of the car from the cone.
         x_error: float = msg.x_pos - self.parking_distance
 
-        # Detects of the car is too far out of alignment with the cone.`
-        high_angular_error: bool = (np.abs(angle_error) > self.angular_error_threshold)
+        # Updates PID values.
+        self.x_error_integral: float = np.clip(
+            self.x_error_integral + dt * self.previous_x_error, 
+            *self.integral_bounds
+        )
+        self.previous_x_error = x_error
+        self.previous_time = current_time
 
         # Checks if the distance error is large enough to require reversing.
-        reverse: bool = (distance_error <= self.distance_error_threshold[0] and
-            not distance_error >= self.distance_error_threshold[1])
+        reverse: bool = (x_error <= self.distance_error_threshold[0] and
+            not x_error >= self.distance_error_threshold[1])
         
         # Car is pointed in the wrong direction. Reversing for 3 point parking 
         # type maneuvers.
         heading: float = -angle_error if reverse else angle_error
         
+        # Detects of the car is too far out of alignment with the cone.
+        high_angular_error: bool = (np.abs(angle_error) > self.angular_error_threshold)
         if not high_angular_error and (
-            self.distance_error_threshold[0] < distance_error < self.distance_error_threshold[1]
+            self.distance_error_threshold[0] < x_error < self.distance_error_threshold[1]
         ):
             velocity = self.parking_velocity * ((x_error)/self.parking_distance)
             heading /= 2        
         else:
             velocity = -self.parking_velocity if reverse else self.parking_velocity
 
-        # Updates PID values.
-        self.integrated_dist_error += np.clip(
-            dt * self.previous_x_error, *self.integral_bounds
-        )
-        self.previous_x_error = x_error
-        self.previous_time = current_time
-        
         # Writes items into the drive command and publishes it.
         drive_cmd: AckermannDriveStamped = AckermannDriveStamped()
         drive_cmd.header.frame_id: str = "base_link"
