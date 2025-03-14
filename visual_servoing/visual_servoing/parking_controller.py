@@ -16,42 +16,39 @@ class ParkingController(Node):
     """
     def __init__(self):
         super().__init__("parking_controller")
-
+        #! @brief Parameters for the parking controller.
         # Set in launch file; different for simulator vs racecar
         self.declare_parameter("drive_topic")
-        DRIVE_TOPIC: str = self.get_parameter("drive_topic").string_value
-
         # Boundary for when the car is considered pointed in the right direction.
         self.declare_parameter("anglular_error_threshold", np.radians(30))
-        self.angular_error_threshold: float = self.get_parameter(
-            "anglular_error_threshold").double_value
-        
         # Boundaries for when the car is considered too close/too far from the 
         # cone for angle adjustment manuevers (negative is too close).
         self.declare_parameter("distance_error_thresholds", [-0.2, 0.2])
-        self.distance_error_threshold: float = self.get_parameter(
-            "distance_error_thresholds").get_parameter_value().double_array_value
-
         # How fast we want the car to go while parking
         self.declare_parameter("parking_velocity", 0.8)
-        self.parking_velocity: float = self.get_parameter(
-            "parking_velocity").double_value
-        
         # How far we want to park from the location.
         self.declare_parameter("parking_distance", 0.75)
+
+        #! @brief Gets the parameters for the parking controller.
+        DRIVE_TOPIC: str = self.get_parameter("drive_topic").string_value
+        self.angular_error_threshold: float = self.get_parameter(
+            "anglular_error_threshold").double_value
+        self.distance_error_threshold: float = self.get_parameter(
+            "distance_error_thresholds").get_parameter_value().double_array_value
+        self.parking_velocity: float = self.get_parameter(
+            "parking_velocity").double_value
         self.parking_distance: float = self.get_parameter(
             "parking_distance").double_value
 
         #! @brief Driving variables for the controller to track its state.
-        # Detected relative x and y position of the cone.
-        self.relative_x = 0
-        self.relative_y = 0
         # Whether or not the car is reversing.
-        self.reverse = False
+        self.reverse: bool = False
         # PID variables for the controller.
-        self.previous_x_error = 0 
-        self.previous_time = Time()
-        self.integrated_dist_error = 0
+        self.previous_x_error: float = 0 
+        self.previous_time: float = Time()
+        self.integrated_dist_error: float = 0
+        # Integral error clipping for the PID controller to prevent windup.
+        self.integral_bounds: tuple[float, float] = (-10.0, 10.0)
 
         # Publishers for the drive command and error between the car and parking
         # location.
@@ -61,12 +58,6 @@ class ParkingController(Node):
         # Subscriber for the relative cone location.
         self.create_subscription(ConeLocation, "/relative_cone", 
             self.relative_cone_callback, 1)
-
-        # Integral error clipping for the PID controller to prevent windup.
-        self.integral_max, self.integral_min = -10, 10
-
-        # Enable setting parking_velocity and parking_distance from the command line 
-        self.add_on_set_parameters_callback(self.parameters_callback)
 
         # Log that the controller has been initialized.
         self.get_logger().info("Parking Controller Initialized")
@@ -123,7 +114,10 @@ class ParkingController(Node):
         else:
             velocity = -self.parking_velocity if self.reverse else self.parking_velocity
 
-        self.integrated_dist_error += max(min(dt * self.previous_x_error, self.integral_max), self.integral_min)
+        # Updates PID values.
+        self.integrated_dist_error += np.clip(
+            dt * self.previous_x_error, *self.integral_bounds
+        )
         self.previous_x_error = x_error
         self.previous_time = current_time
         
