@@ -30,15 +30,16 @@ class ParkingController(Node):
         self.declare_parameter("parking_distance", 0.75)
 
         #! @brief Gets the parameters for the parking controller.
-        DRIVE_TOPIC: str = self.get_parameter("drive_topic").string_value
+        DRIVE_TOPIC: str = self.get_parameter(
+            "drive_topic").get_parameter_value().string_value
         self.angular_error_threshold: float = self.get_parameter(
-            "anglular_error_threshold").double_value
+            "anglular_error_threshold").get_parameter_value().double_value
         self.distance_error_threshold: float = self.get_parameter(
             "distance_error_thresholds").get_parameter_value().double_array_value
         self.parking_velocity: float = self.get_parameter(
-            "parking_velocity").double_value
+            "parking_velocity").get_parameter_value().double_value
         self.parking_distance: float = self.get_parameter(
-            "parking_distance").double_value
+            "parking_distance").get_parameter_value().double_value
 
         #! @brief Driving variables for the controller to track its state.
         # Whether or not the car is reversing.
