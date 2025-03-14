@@ -34,7 +34,39 @@ def cd_color_segmentation(img, template):
 	"""
 	########## YOUR CODE STARTS HERE ##########
 
-	bounding_box = ((0,0),(0,0))
+	# convert the image from RGB to HSV
+	hsv_cone = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+
+	# define lower and upper bound for orange color
+	light_orange = np.array([5, 150, 140])
+	dark_orange = np.array([15, 255, 255])
+
+	# create mask
+	mask = cv2.inRange(hsv_cone, light_orange, dark_orange)
+
+	# Matrix of size 3 as a kernel
+	kernel = np.ones((3, 3), np.uint8)
+
+	eroded_mask = cv2.erode(mask, kernel, iterations=1)
+	dilated_mask = cv2.dilate(eroded_mask, kernel, iterations=1)
+
+	# filter out the unwanted color
+	result = cv2.bitwise_and(img, img, mask=dilated_mask)
+
+	contours, _ = cv2.findContours(dilated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+	for contour in contours:
+		if cv2.contourArea(contour) > 300:
+			x, y, w, h = cv2.boundingRect(contour)
+			cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
+			bounding_box = ((x, y), (x + w, y + h))
+		else:
+			bounding_box = ((-1, -1), (-1, -1))
+
+	cv2.imshow("Segmented Output", result)
+	cv2.imshow("image", img)
+	cv2.waitKey(0)
+	cv2.destroyAllWindows()
 
 	########### YOUR CODE ENDS HERE ###########
 
