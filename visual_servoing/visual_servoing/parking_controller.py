@@ -94,8 +94,8 @@ class ParkingController(Node):
         else:
             velocity = -self.parking_velocity if self.reverse else self.parking_velocity
 
-        self.integrated_dist_error += max(min(dt * self.previous_y_error, self.integral_max), self.integral_min)
-        self.previous_y_error = x_error
+        self.integrated_dist_error += max(min(dt * self.previous_x_error, self.integral_max), self.integral_min)
+        self.previous_x_error = x_error
         self.previous_time = current_time
         
 
