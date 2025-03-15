@@ -6,7 +6,7 @@ import numpy as np
 # 0,0  X  > > > > >
 #
 #  Y
-#
+
 #  v  This is the image. Y increases downwards, X increases rightwards
 #  v  Please return bounding boxes as ((xmin, ymin), (xmax, ymax))
 #  v
@@ -69,7 +69,18 @@ def cd_sift_ransac(img, template):
 
 		########## YOUR CODE STARTS HERE ##########
 
-		x_min = y_min = x_max = y_max = 0
+		if M is not None:
+			#trans corners w homography mat
+			trans = cv2.perspectiveTransform(pts, M)
+
+			#bound box coords
+			x_min=int(np.min(trans[:,0,0]))
+			y_min=int(np.min(trans[:,0,1]))
+			x_max=int(np.max(trans[:,0,0]))
+			y_max=int(np.max(trans[:,0,1]))
+
+		else:
+			x_min, y_min, x_max, y_max = 0, 0, 0, 0
 
 		########### YOUR CODE ENDS HERE ###########
 
@@ -116,9 +127,29 @@ def cd_template_matching(img, template):
 		# Use OpenCV template matching functions to find the best match
 		# across template scales.
 
+		#templte matching
+		result=cv2.matchTemplate(img_canny, resized_template, cv2.TM_CCOEFF_NORMED)
+
+        #loc of best match
+		min_value, max_value, min_loc, max_loc=cv2.minMaxLoc(result)
+		
+		#top left
+		x1, y1=max_loc 
+
+        #bottom right from top left
+		x2=x1+w
+		y2=y1+h
+
+        #best one
+		if best_match is None or max_value > best_match[0]:
+			best_match=(max_value, (x1, y1, x2, y2))
+
+    #bounds of best match
+	bounding_box=((best_match[1][0], best_match[1][1]), (best_match[1][2], best_match[1][3]))
+
+
 		# Remember to resize the bounding box using the highest scoring scale
 		# x1,y1 pixel will be accurate, but x2,y2 needs to be correctly scaled
-		bounding_box = ((0,0),(0,0))
 		########### YOUR CODE ENDS HERE ###########
 
 	return bounding_box
