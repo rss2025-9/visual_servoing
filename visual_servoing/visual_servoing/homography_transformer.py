@@ -30,7 +30,8 @@ PTS_IMAGE_PLANE = [[442, 228],
                    [256, 173], 
                    [402, 173], 
                    [553, 208], 
-                   [546, 258]] # dummy points
+                   [546, 258],
+                   [344, 179],] # dummy points
 ######################################################
 
 # PTS_GROUND_PLANE units are in inches
@@ -47,7 +48,8 @@ PTS_GROUND_PLANE = [[34, -12],
                     [96, 18],
                     [96, -23], 
                     [38, -29], 
-                    [23, -13]] # dummy points
+                    [23, -13],
+                    [118, -6],] # dummy points
 ######################################################
 
 METERS_PER_INCH = 0.0254
@@ -91,8 +93,8 @@ class HomographyTransformer(Node):
         relative_xy_msg.x_pos = x
         relative_xy_msg.y_pos = y
 
-        self.draw_marker(x, y, "map")
-
+        self.draw_marker(x, y, "zed_left_camera_frame")
+        self.get_logger().info(f"relative cone positions in real world (meters): {x}, {y}")
         self.cone_pub.publish(relative_xy_msg)
 
     def transformUvToXy(self, u, v):

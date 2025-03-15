@@ -56,14 +56,14 @@ def cd_color_segmentation(img, template):
 	contours, _ = cv2.findContours(dilated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
 	for contour in contours:
-		if cv2.contourArea(contour) > 300:
+		if cv2.contourArea(contour) > 100:
 			x, y, w, h = cv2.boundingRect(contour)
 			cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
 			bounding_box = ((x, y), (x + w, y + h))
 		else:
 			bounding_box = ((-1, -1), (-1, -1))
 
-	cv2.imshow("Segmented Output", result)
+	# cv2.imshow("Segmented Output", result)
 	cv2.imshow("image", img)
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
