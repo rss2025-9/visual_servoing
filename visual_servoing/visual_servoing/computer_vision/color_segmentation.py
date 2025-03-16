@@ -43,16 +43,18 @@ def cd_color_segmentation(img, template):
 	# )
 
 	# define lower and upper bound for orange color
-	# light_orange = np.array([5, 190, 180])
-	# dark_orange = np.array([30, 255, 255])
-	light_orange = np.array([5, 150, 140])
-	dark_orange = np.array([15, 255, 255])
+
+	# light_orange = np.array([5, 150, 140])
+	# dark_orange = np.array([15, 255, 255])
+
+	lower_bound = np.array([5, 190, 180])	# hue, saturation (intensity), value (brightness)
+	upper_bound = np.array([30, 255, 255])	# value=0 -> black, saturation=0 -> white if value is high enough
 
 	# dark_orange = np.max(hsv_temp, axis=2)
 	# light_orange = np.min(hsv_temp, axis=2)
 
 	# create mask
-	mask = cv2.inRange(hsv_cone, light_orange, dark_orange)
+	mask = cv2.inRange(hsv_cone, lower_bound, upper_bound)
 
 	# Matrix of size 3 as a kernel
 	kernel = np.ones((3, 3), np.uint8)
@@ -74,10 +76,11 @@ def cd_color_segmentation(img, template):
 
 	if bounding_box is None:
 		bounding_box = ((0, 0), (0, 0))
+
 	# cv2.imshow("Segmented Output", result)
-	# cv2.imshow("image", img)
-	# cv2.waitKey(0)
-	# cv2.destroyAllWindows()
+	cv2.imshow("image", img)
+	cv2.waitKey(0)
+	cv2.destroyAllWindows()
 
 	########### YOUR CODE ENDS HERE ###########
 
