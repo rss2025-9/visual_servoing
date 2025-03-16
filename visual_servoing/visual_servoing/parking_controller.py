@@ -23,7 +23,7 @@ class ParkingController(Node):
         self.declare_parameter("anglular_error_threshold", np.radians(30))
         # Boundaries for when the car is considered too close/too far from the 
         # cone for angle adjustment manuevers (negative is too close).
-        self.declare_parameter("distance_error_thresholds", [-0.5, 0.5])
+        self.declare_parameter("distance_error_thresholds", [-1.0, 1.0])
         # How fast we want the car to go while parking
         self.declare_parameter("parking_velocity", 0.8)
         # How far we want to park from the location.
