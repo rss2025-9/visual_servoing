@@ -33,6 +33,7 @@ def cd_color_segmentation(img, template):
 				(x1, y1) is the top left of the bbox and (x2, y2) is the bottom right of the bbox
 	"""
 	########## YOUR CODE STARTS HERE ##########
+	bounding_box = ((-1, -1), (-1, -1))
 
 	# convert the image from RGB to HSV
 	hsv_cone = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -56,11 +57,11 @@ def cd_color_segmentation(img, template):
 	contours, _ = cv2.findContours(dilated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
 	for contour in contours:
-		if cv2.contourArea(contour) > 100:
+		if cv2.contourArea(contour) > 200:
 			x, y, w, h = cv2.boundingRect(contour)
 			cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
 			bounding_box = ((x, y), (x + w, y + h))
-		else:
+		else: 
 			bounding_box = ((-1, -1), (-1, -1))
 
 	# cv2.imshow("Segmented Output", result)

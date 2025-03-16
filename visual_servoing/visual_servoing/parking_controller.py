@@ -18,7 +18,7 @@ class ParkingController(Node):
         super().__init__("parking_controller")
         #! @brief Parameters for the parking controller.
         # Set in launch file; different for simulator vs racecar
-        self.declare_parameter("drive_topic")
+        self.declare_parameter("drive_topic", "/vesc/high_level/input/nav_0")
         # Boundary for when the car is considered pointed in the right direction.
         self.declare_parameter("anglular_error_threshold", np.radians(30))
         # Boundaries for when the car is considered too close/too far from the 
@@ -46,9 +46,9 @@ class ParkingController(Node):
         self.declare_parameters(
             namespace="pid",
             parameters=[
-                ("kp", 0.5),
+                ("kp", 1.0),
                 ("ki", 0.0),
-                ("kd", 0.2)
+                ("kd", 0.5)
             ]
         )
         self.kp: float = self.get_parameter("pid.kp").get_parameter_value().double_value
