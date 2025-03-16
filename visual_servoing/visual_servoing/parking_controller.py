@@ -41,9 +41,7 @@ class ParkingController(Node):
         self.parking_distance: float = self.get_parameter(
             "parking_distance").get_parameter_value().double_value
 
-        #! @brief Driving variables for the controller to track its state.
-        # Whether or not the car is reversing.
-        self.reverse: bool = False
+        #! @brief PID variables for the controller.
         # PID variables for the controller.
         self.previous_x_error: float = 0 
         self.previous_time: float = Time()
@@ -95,25 +93,21 @@ class ParkingController(Node):
         # Detects of the car is too far out of alignment with the cone.`
         high_angular_error: bool = (np.abs(angle_error) > self.angular_error_threshold)
 
+        # Checks if the distance error is large enough to require reversing.
+        reverse: bool = (distance_error <= self.distance_error_threshold[0] and
+            not distance_error >= self.distance_error_threshold[1])
+        
         # Car is pointed in the wrong direction. Reversing for 3 point parking 
         # type maneuvers.
-        heading: float = -angle_error if self.reverse else angle_error
-
-        # No clue yet what this is doing? I believe it can just be collapsed to
-        # 1 bool.
-        if distance_error <= self.distance_error_threshold[0]:
-                self.reverse = True
-        elif distance_error >= self.distance_error_threshold[1]:
-                self.reverse = False
+        heading: float = -angle_error if reverse else angle_error
         
-        velocity: float
         if not high_angular_error and (
             self.distance_error_threshold[0] < distance_error < self.distance_error_threshold[1]
         ):
             velocity = self.parking_velocity * ((x_error)/self.parking_distance)
             heading /= 2        
         else:
-            velocity = -self.parking_velocity if self.reverse else self.parking_velocity
+            velocity = -self.parking_velocity if reverse else self.parking_velocity
 
         # Updates PID values.
         self.integrated_dist_error += np.clip(
