@@ -82,14 +82,14 @@ class ParkingController(Node):
         # Current angle of the cone relative to front of the car.
         #! @note: We want to be right in front of the cone, so we want an angle
         #! of 0 (aka angle is also the angle error).
-        angle_error: float = np.arctan2(msg.y_pos, self.x_pos)
+        angle_error: float = np.arctan2(msg.y_pos, msg.x_pos)
         # Current distance of the car from the cone
         distance: float = np.hypot(msg.x_pos, msg.y_pos)
 
         # Gets the distance error.
         distance_error: float = distance - self.parking_distance
         # Gets the error of the x position of the car from the cone.
-        x_error: float = self.x_pos- self.parking_distance
+        x_error: float = msg.x_pos - self.parking_distance
 
         # Detects of the car is too far out of alignment with the cone.`
         high_angular_error: bool = (np.abs(angle_error) > self.angular_error_threshold)
@@ -105,7 +105,7 @@ class ParkingController(Node):
         elif distance_error >= self.distance_error_threshold[1]:
                 self.reverse = False
         
-        
+        velocity: float
         if not high_angular_error and (
             self.distance_error_threshold[0] < distance_error < self.distance_error_threshold[1]
         ):
