@@ -31,12 +31,7 @@ from vs_msgs.msg import ConeLocation, ConeLocationPixel
 #                    [402, 173], 
 #                    [553, 208], 
 #                    [546, 258],
-#                    [344, 179],] # dummy points
-PTS_IMAGE_PLANE = [[351, 252],
-                   [322, 186],
-                   [458, 183],
-                   [128, 218],
-                   [310, 213],]
+#                    [344, 179], # dummy points
 ######################################################
 
 # PTS_GROUND_PLANE units are in inches
@@ -54,12 +49,26 @@ PTS_IMAGE_PLANE = [[351, 252],
 #                     [96, -23], 
 #                     [38, -29], 
 #                     [23, -13],
-#                     [118, -6],] # dummy points
-PTS_GROUND_PLANE = [[26.5, -3.75],
-                    [99.25, -3.5], 
-                    [113.5, -49.75],
-                    [39.625, 20], 
-                    [42, -0.75],]
+#                     [118, -6], # dummy points
+######################################################
+
+######################################################
+## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE
+PTS_IMAGE_PLANE = [[287, 312],
+                   [466, 310],
+                   [411, 255],
+                   [292, 254]] # dummy points
+######################################################
+
+# PTS_GROUND_PLANE units are in inches
+# car looks along positive x axis with positive y axis to left
+
+######################################################
+## DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE
+PTS_GROUND_PLANE = [[12.5, 2],
+                    [12.5, -5.5],
+                    [20.5, -5.5],
+                    [20.5, 2]] # dummy points
 ######################################################
 
 METERS_PER_INCH = 0.0254
