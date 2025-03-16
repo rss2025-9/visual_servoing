@@ -23,7 +23,7 @@ class ParkingController(Node):
         self.declare_parameter("anglular_error_threshold", np.radians(30))
         # Boundaries for when the car is considered too close/too far from the 
         # cone for angle adjustment manuevers (negative is too close).
-        self.declare_parameter("distance_error_thresholds", [-0.2, 0.2])
+        self.declare_parameter("distance_error_thresholds", [-0.5, 0.5])
         # How fast we want the car to go while parking
         self.declare_parameter("parking_velocity", 0.8)
         # How far we want to park from the location.
@@ -42,6 +42,18 @@ class ParkingController(Node):
             "parking_distance").get_parameter_value().double_value
 
         #! @brief PID variables for the controller.
+        # PID constants for the controller.
+        self.declare_parameters(
+            namespace="pid",
+            parameters=[
+                ("kp", 0.5),
+                ("ki", 0.0),
+                ("kd", 0.2)
+            ]
+        )
+        self.kp: float = self.get_parameter("pid.kp").get_parameter_value().double_value
+        self.ki: float = self.get_parameter("pid.ki").get_parameter_value().double_value
+        self.kd: float = self.get_parameter("pid.kd").get_parameter_value().double_value
         # PID variables for the controller.
         self.previous_x_error: float = 0 
         self.previous_time: float = Time()
@@ -103,10 +115,15 @@ class ParkingController(Node):
         
         # Detects of the car is too far out of alignment with the cone.
         high_angular_error: bool = (np.abs(angle_error) > self.angular_error_threshold)
+        velocity: float = 0
         if not high_angular_error and (
             self.distance_error_threshold[0] < x_error < self.distance_error_threshold[1]
         ):
-            velocity = self.parking_velocity * ((x_error)/self.parking_distance)
+            velocity = np.clip(self.parking_velocity * (
+                self.kp * x_error +
+                self.ki * self.x_error_integral +
+                self.kd * (x_error - self.previous_x_error) / dt
+            ), -self.parking_velocity, self.parking_velocity)
             heading /= 2        
         else:
             velocity = -self.parking_velocity if reverse else self.parking_velocity
