@@ -45,8 +45,14 @@ def cd_color_segmentation(img, template):
 	# define lower and upper bound for orange color
 	# light_orange = np.array([5, 190, 180])
 	# dark_orange = np.array([30, 255, 255])
-	light_orange = np.array([5, 150, 140])
-	dark_orange = np.array([15, 255, 255])
+
+	# good for cone detection 
+	# light_orange = np.array([5, 150, 140])
+	# dark_orange = np.array([15, 255, 255])
+
+	# line follower
+	light_orange = np.array([5, 150, 70])
+	dark_orange = np.array([45, 225, 255])
 
 	# dark_orange = np.max(hsv_temp, axis=2)
 	# light_orange = np.min(hsv_temp, axis=2)
@@ -66,9 +72,12 @@ def cd_color_segmentation(img, template):
 
 	contours, _ = cv2.findContours(dilated_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	bounding_box = None
-	for contour in contours:
-		if cv2.contourArea(contour) > 300:
+	for contour in contours: 
+		if cv2.contourArea(contour) > 100:
 			x, y, w, h = cv2.boundingRect(contour)
+			# For line-following.
+			if y < 150:
+				continue
 			cv2.rectangle(img, (x, y), (x + w, y + h), (0, 0, 255), 2)
 			bounding_box = ((x, y), (x + w, y + h))
 

@@ -20,20 +20,20 @@ class LineFollower(Node):
         # Set in launch file; different for simulator vs racecar
         self.declare_parameter("drive_topic", "/vesc/low_level/input/navigation")
         # Boundary for when the car is considered pointed in the right direction.
-        self.declare_parameter("anglular_error_threshold", np.radians(30))
+        # self.declare_parameter("anglular_error_threshold", np.radians(30))
         # Boundaries for when the car is considered too close/too far from the 
         # cone for angle adjustment manuevers (negative is too close).
         self.declare_parameter("distance_error_thresholds", [-1.0, 1.0])
         # How fast we want the car to go 
-        self.declare_parameter("velocity", 0.8)
+        self.declare_parameter("velocity", 1.25)
         # goal distance from object 
-        self.declare_parameter("distance", -1)
+        self.declare_parameter("distance", -20)
 
         #! @brief Gets the parameters for the parking controller.
         DRIVE_TOPIC: str = self.get_parameter(
             "drive_topic").get_parameter_value().string_value
-        self.angular_error_threshold: float = self.get_parameter(
-            "anglular_error_threshold").get_parameter_value().double_value
+        # self.angular_error_threshold: float = self.get_parameter(
+        #     "anglular_error_threshold").get_parameter_value().double_value
         self.distance_error_threshold: float = self.get_parameter(
             "distance_error_thresholds").get_parameter_value().double_array_value
         self.velocity: float = self.get_parameter(
@@ -55,9 +55,9 @@ class LineFollower(Node):
         self.ki: float = self.get_parameter("pid.ki").get_parameter_value().double_value
         self.kd: float = self.get_parameter("pid.kd").get_parameter_value().double_value
         # PID variables for the controller.
-        self.previous_x_error: float = 0 
+        self.previous_angle_error: float = 0 
         self.previous_time: float = Time()
-        self.x_error_integral: float = 0
+        self.angle_error_integral: float = 0
         # Integral error clipping for the PID controller to prevent windup.
         self.integral_bounds: tuple[float, float] = (-10.0, 10.0)
 
@@ -94,39 +94,24 @@ class LineFollower(Node):
         #! of 0 (aka angle is also the angle error).
         # Current angle of the cone relative to front of the car.
         angle_error: float = np.arctan2(msg.y_pos, msg.x_pos)
-        # Gets the error of the x position of the car from the cone.
-        x_error: float = msg.x_pos - self.distance
-
+        
+        # Point wheels towards the line.
+        heading: float = np.clip(
+            self.kp * angle_error + 
+            self.ki * self.angle_error_integral + 
+            self.kd * (angle_error - self.previous_angle_error),
+            -np.radians(30), np.radians(30)
+        )
         # Updates PID values.
-        self.x_error_integral: float = np.clip(
-            self.x_error_integral + dt * self.previous_x_error, 
+        self.angle_error_integral: float = np.clip(
+            self.angle_error_integral + dt * self.previous_angle_error, 
             *self.integral_bounds
         )
-        self.previous_x_error = x_error
+        self.previous_angle_error = angle_error
         self.previous_time = current_time
-
-        # Checks if the distance error is large enough to require reversing.
-        reverse: bool = (x_error <= self.distance_error_threshold[0] and
-            not x_error >= self.distance_error_threshold[1])
         
-        # Car is pointed in the wrong direction. Reversing for 3 point parking 
-        # type maneuvers.
-        heading: float = -angle_error if reverse else angle_error
-        
-        # Detects of the car is too far out of alignment with the cone.
-        high_angular_error: bool = (np.abs(angle_error) > self.angular_error_threshold)
-        velocity: float = 0
-        if not high_angular_error and (
-            self.distance_error_threshold[0] < x_error < self.distance_error_threshold[1]
-        ):
-            velocity = np.clip(self.velocity * (
-                self.kp * x_error +
-                self.ki * self.x_error_integral +
-                self.kd * (x_error - self.previous_x_error) / dt
-            ), -self.velocity, self.velocity)
-            heading /= 2        
-        else:
-            velocity = -self.velocity if reverse else self.velocity
+        # Detects of the car is too far out of alignment with the line.
+        velocity = self.velocity
 
         # Writes items into the drive command and publishes it.
         drive_cmd: AckermannDriveStamped = AckermannDriveStamped()
