@@ -47,7 +47,7 @@ def cd_color_segmentation(img, template):
 	# light_orange = np.array([5, 150, 140])
 	# dark_orange = np.array([15, 255, 255])
 
-	lower_bound = np.array([5, 190, 180])	# hue, saturation (intensity), value (brightness)
+	lower_bound = np.array([5, 190, 170])	# hue, saturation (intensity), value (brightness)
 	upper_bound = np.array([30, 255, 255])	# value=0 -> black, saturation=0 -> white if value is high enough
 
 	# dark_orange = np.max(hsv_temp, axis=2)
